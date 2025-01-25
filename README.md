@@ -1,6 +1,34 @@
-# STAMP: Scalable Task And Model-agnostic Collaborative Perception
+# STAMP: Scalable Task- And Model-agnostic Collaborative Perception
 
-This repository provides an open heterogeneous multi-agent collaborative perception framework for autonomous driving.
+<!-- [![Video](video)](https://www.youtube.com/watch?v=OlQDg7EMWrE) -->
+
+This repo hosts the official implementation of STAMP: an open heterogeneous multi-agent collaborative perception framework for autonomous driving.
+
+## Video Demo
+
+<p align="center">
+  <b>Before Collaborative Feature Alignment (CFA)</b> &nbsp;&nbsp;&nbsp;<b>After Collaborative Feature Alignment (CFA)</b>
+</p>
+<p align="center">
+  <video width="300" height="300" controls>
+    <source src="demo/STAMP_276.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <video width="300" height="300" controls>
+    <source src="demo/STAMP_identity_276.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</p>
+<p align="center">
+  <video width="300" height="300" controls>
+    <source src="demo/STAMP_00536.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <video width="300" height="300" controls>
+    <source src="demo/STAMP_identity_00536.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</p>
 
 Our framework supports:
 
@@ -15,6 +43,7 @@ Our framework supports:
     - [x] SECOND (LiDAR)  
     - [x] Pixor (LiDAR)  
     - [x] VoxelNet (LiDAR)  
+    - [x] PointFormer (LiDAR)
     - [x] Lift-Splat-Shoot [ResNet] (Camera)  
     - [x] Lift-Splat-Shoot [EfficientNet] (Camera)  
   - [x] **Fusion model**  
