@@ -1,6 +1,4 @@
-# STAMP: Scalable Task- And Model-agnostic Collaborative Perception
-
-<!-- [![Video](video)](https://www.youtube.com/watch?v=OlQDg7EMWrE) -->
+# [ICLR'25] STAMP: Scalable Task And Model-agnostic Collaborative Perception 
 
 This repo hosts the official implementation of STAMP: an open heterogeneous multi-agent collaborative perception framework for autonomous driving.
 
