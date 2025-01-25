@@ -3,6 +3,9 @@
 HEAL: An Extensible Framework for Open Heterogeneous Collaborative Perception 
 """
 
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
 import torch
 import cv2
 import torch.nn as nn

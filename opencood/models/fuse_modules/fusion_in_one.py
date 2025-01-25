@@ -2,6 +2,10 @@
 # Author: Yifan Lu <yifan_lu@sjtu.edu.cn>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
+
 import torch
 from torch import nn
 from opencood.models.sub_modules.torch_transformation_utils import \

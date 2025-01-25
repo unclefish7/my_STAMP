@@ -1,7 +1,12 @@
+# -*- coding: utf-8 -*-
+
 """ Author: Yifan Lu <yifan_lu@sjtu.edu.cn>
 
 HEAL: An Extensible Framework for Open Heterogeneous Collaborative Perception 
 """
+
+# Author: Xiangbo Gao <xiangbogaobarry@gmail.com>
+# License: MIT License
 
 import torch
 import cv2

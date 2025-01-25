@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# Author: Xiangbo Gao <xiangbogaobarry@gmail.com>
+# License: MIT License
+
 """
 Seg head for bev understanding
 """

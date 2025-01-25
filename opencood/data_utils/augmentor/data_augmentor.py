@@ -1,3 +1,6 @@
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
 # -*- coding: utf-8 -*-
 """
 Class for data augmentation

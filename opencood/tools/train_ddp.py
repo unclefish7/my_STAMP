@@ -1,3 +1,6 @@
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
 import argparse
 import os
 import statistics

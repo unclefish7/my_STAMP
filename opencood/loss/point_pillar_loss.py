@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # Author: Yifan Lu
+
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
 # Add direction classification loss
 # The originally point_pillar_loss.py, can not determine if the box heading is opposite to the GT.
 

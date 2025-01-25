@@ -1,5 +1,6 @@
-""" Author: Xiangbo Gao <xiangbogaobarry@gmail.com>
-"""
+# -*- coding: utf-8 -*-
+# Author: Xiangbo Gao <xiangbogaobarry@gmail.com>
+# License: MIT License
 
 import torch
 import torch.nn as nn

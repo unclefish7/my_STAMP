@@ -1,5 +1,9 @@
 # Author: Yangheng Zhao <zhaoyangheng-sjtu@sjtu.edu.cn>
 
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
+
 import os
 import pickle
 from collections import OrderedDict

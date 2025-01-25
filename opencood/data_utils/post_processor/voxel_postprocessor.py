@@ -2,6 +2,10 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>, OpenPCDet
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
+
 
 """
 3D Anchor Generator for Voxel

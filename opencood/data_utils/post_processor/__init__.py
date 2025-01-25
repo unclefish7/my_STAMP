@@ -2,6 +2,10 @@
 # Author: Runsheng Xu <rxx3386@ucla.edu>
 # License: TDG-Attribution-NonCommercial-NoDistrib
 
+# Modifications by Xiangbo Gao <xiangbogaobarry@gmail.com>
+# New License for modifications: MIT License
+
+
 from opencood.data_utils.post_processor.voxel_postprocessor import VoxelPostprocessor
 from opencood.data_utils.post_processor.bev_postprocessor import BevPostprocessor
 from opencood.data_utils.post_processor.ciassd_postprocessor import CiassdPostprocessor

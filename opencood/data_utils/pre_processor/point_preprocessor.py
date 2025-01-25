@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Author: Xiangbo Gao <xiangbogaobarry@gmail.com>
+# License: MIT License
+
+# -*- coding: utf-8 -*-
 
 import numpy as np
 
