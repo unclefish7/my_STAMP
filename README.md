@@ -8,7 +8,7 @@ This repo hosts the official implementation of STAMP: an open heterogeneous mult
 
 | Before CFA                           | After CFA                            |
 |--------------------------------------|--------------------------------------|
-| ![Before CFA](demo/STAMP_276.gif)    | ![After CFA](demo/STAMP_identity_276.gif) |
+| ![Before CFA](demo/STAMP_identity_276.gif)    | ![After CFA](demo/STAMP_276.gif) |
 
 ## Architecture
 
