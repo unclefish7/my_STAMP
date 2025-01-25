@@ -2,9 +2,17 @@
 
 This repo hosts the official implementation of STAMP: an open heterogeneous multi-agent collaborative perception framework for autonomous driving.
 
+[![Paper](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)]() [![YouTube Video](https://img.shields.io/badge/YouTube-Video-FF0000.svg)](https://www.youtube.com/embed/OlQDg7EMWrE)
+
 ## Video
 
-<iframe width="300" height="300" src="https://www.youtube.com/embed/OlQDg7EMWrE" frameborder="0" allowfullscreen></iframe>
+| Before CFA                           | After CFA                            |
+|--------------------------------------|--------------------------------------|
+| ![Before CFA](demo/STAMP_276.gif)    | ![After CFA](demo/STAMP_identity_276.gif) |
+
+## Architecture
+
+[![architecture](demo/architecture.png)](demo/architecture.png)
 
 Our framework supports:
 
