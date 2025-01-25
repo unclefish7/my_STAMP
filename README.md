@@ -2,31 +2,9 @@
 
 This repo hosts the official implementation of STAMP: an open heterogeneous multi-agent collaborative perception framework for autonomous driving.
 
-## Video Demo
+## Video
 
-<p align="center">
-  <b>Before Collaborative Feature Alignment (CFA)</b> &nbsp;&nbsp;&nbsp;<b>After Collaborative Feature Alignment (CFA)</b>
-</p>
-<p align="center">
-  <video width="300" height="300" controls>
-    <source src="demo/STAMP_276.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <video width="300" height="300" controls>
-    <source src="demo/STAMP_identity_276.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</p>
-<p align="center">
-  <video width="300" height="300" controls>
-    <source src="demo/STAMP_00536.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <video width="300" height="300" controls>
-    <source src="demo/STAMP_identity_00536.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</p>
+<iframe width="300" height="300" src="https://www.youtube.com/embed/OlQDg7EMWrE" frameborder="0" allowfullscreen></iframe>
 
 Our framework supports:
 
