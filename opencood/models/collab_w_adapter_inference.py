@@ -1,4 +1,5 @@
-""" Author: 
+""" Author: Yifan Lu <yifan_lu@sjtu.edu.cn>
+
 HEAL: An Extensible Framework for Open Heterogeneous Collaborative Perception 
 """
 

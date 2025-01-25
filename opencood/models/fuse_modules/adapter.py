@@ -28,7 +28,7 @@ from opencood.models.sub_modules.deformable_attention import (
     apply_rotary_emb,
     init_random_2d_freqs,
 )
-# from positional_encodings.torch_encodings import PositionalEncoding2D, PositionalEncodingPermute2D, Summer
+from positional_encodings.torch_encodings import PositionalEncoding2D, PositionalEncodingPermute2D, Summer
 
 import warnings
 import numpy as np

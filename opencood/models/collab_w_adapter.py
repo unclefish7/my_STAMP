@@ -1,5 +1,4 @@
-""" Author: 
-HEAL: An Extensible Framework for Open Heterogeneous Collaborative Perception 
+""" Author: Xiangbo Gao <xiangbogaobarry@gmail.com>
 """
 
 import torch

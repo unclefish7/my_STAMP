@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Author: Yue Hu <phyllis1sjtu@outlook.com>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import torch
 import torch.nn as nn

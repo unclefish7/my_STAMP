@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Author: Xiangbo Gao <xiangbog@umich.edu.cn>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 import os
 from collections import OrderedDict

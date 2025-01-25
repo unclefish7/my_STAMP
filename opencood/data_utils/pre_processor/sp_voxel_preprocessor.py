@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Author: Runsheng Xu <rxx3386@ucla.edu>, OpenPCDet
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 """
 Transform points to voxels using sparse conv library
@@ -169,5 +171,4 @@ class SpVoxelPreprocessor(BasePreprocessor):
 
         return {'voxel_features': voxel_features,
                 'voxel_coords': voxel_coords,
-                'voxel_num_points': voxel_num_points,
-                }
+                'voxel_num_points': voxel_num_points}

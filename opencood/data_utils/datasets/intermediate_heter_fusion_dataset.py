@@ -1,6 +1,7 @@
 """
 -*- coding: utf-8 -*-
-Author: License: TDG-Attribution-NonCommercial-NoDistrib
+Author: Yifan Lu <yifan_lu@sjtu.edu.cn>
+License: TDG-Attribution-NonCommercial-NoDistrib
 
 intermediate heter fusion dataset
 

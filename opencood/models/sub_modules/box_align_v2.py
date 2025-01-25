@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Author: Yifan Lu <yifan_lu@sjtu.edu.cn>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 # This module is designed for box alignment
 # We will use g2o for pose graph optimization.

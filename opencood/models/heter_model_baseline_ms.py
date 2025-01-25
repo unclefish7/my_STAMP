@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Author: Yifan Lu <yifan_lu@sjtu.edu.cn>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 # A unified framework for LiDAR-only / Camera-only / Heterogeneous collaboration.
 # Multiscale feature extraction and fusion.

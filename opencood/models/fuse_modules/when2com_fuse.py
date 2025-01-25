@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Author: Yue Hu <18671129361@sjtu.edu.cn>
+# License: TDG-Attribution-NonCommercial-NoDistrib
 
 """
 Implementation of When2com Fusion

@@ -1,5 +1,6 @@
 '''
-Author:     
+Author: Yifan Lu <yifan_lu@sjtu.edu.cn>
+    
 Successively adding agent, evaluation for HEAL
 
 We add 'use_cav' to control the number of cars that really participate in collaboration.
