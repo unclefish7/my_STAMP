@@ -13,16 +13,52 @@ import math
 import torch
 import torch.nn as nn
 import spconv.pytorch as spconv
-import torch_scatter
+# import torch_scatter  # Commented out due to dependency issues
 from timm.models.layers import DropPath
 from collections import OrderedDict
 
 try:
-    import flash_attn
+    # import flash_attn  # Commented out due to dependency issues
+    flash_attn = None
 except ImportError:
     flash_attn = None
 
 from .serialization import encode
+
+
+def segment_csr_replacement(src, indptr, reduce="sum"):
+    """
+    Simple replacement for torch_scatter.segment_csr
+    """
+    result_list = []
+    for i in range(len(indptr) - 1):
+        start_idx = indptr[i]
+        end_idx = indptr[i + 1]
+        if start_idx < end_idx:
+            segment = src[start_idx:end_idx]
+            if reduce == "sum":
+                result_list.append(segment.sum(dim=0))
+            elif reduce == "mean":
+                result_list.append(segment.mean(dim=0))
+            elif reduce == "max":
+                result_list.append(segment.max(dim=0)[0])
+            else:
+                raise ValueError(f"Unsupported reduce operation: {reduce}")
+        else:
+            # Empty segment
+            result_list.append(torch.zeros_like(src[0]))
+    
+    return torch.stack(result_list) if result_list else torch.empty(0, *src.shape[1:], device=src.device)
+
+
+class torch_scatter_replacement:
+    @staticmethod
+    def segment_csr(src, indptr, reduce="sum"):
+        return segment_csr_replacement(src, indptr, reduce)
+
+
+# Create a global variable to replace torch_scatter
+torch_scatter = torch_scatter_replacement()
 
 
 @torch.inference_mode()

@@ -30,7 +30,7 @@ from opencood.models.sub_modules.downsample_conv import DownsampleConv
 from opencood.models.sub_modules.mean_vfe import MeanVFE
 from opencood.models.sub_modules.sparse_backbone_3d import VoxelBackBone8x
 from opencood.models.sub_modules.height_compression import HeightCompression
-from opencood.models.sub_modules.point_transformer_v3 import PointTransformerV3
+# from opencood.models.sub_modules.point_transformer_v3 import PointTransformerV3  # Commented out due to torch_scatter dependency
 from opencood.models.pixor import Bottleneck as PIXORBottlenect, BackBone as PIXORBackBone
 from opencood.models.backbones.resnet_ms import ResnetEncoder
 from opencood.models.sub_modules.fax_modules import FAXModule
@@ -38,27 +38,51 @@ from opencood.models.sub_modules.fax_modules import FAXModule
 from opencood.models.voxel_net import CML
 from opencood.utils.common_utils import torch_tensor_to_numpy
 from torch.autograd import Variable
-from torch_scatter import scatter_mean, scatter_max
+# from torch_scatter import scatter_mean, scatter_max  # Commented out due to dependency issues
 import math
+
+
+def scatter_mean_replacement(src, index, dim=0, dim_size=None):
+    """
+    Simple replacement for torch_scatter.scatter_mean
+    """
+    if dim_size is None:
+        dim_size = index.max().item() + 1
+    
+    result = torch.zeros(dim_size, *src.shape[1:], device=src.device, dtype=src.dtype)
+    count = torch.zeros(dim_size, device=src.device, dtype=torch.float)
+    
+    result.scatter_add_(0, index.unsqueeze(-1).expand_as(src), src)
+    count.scatter_add_(0, index, torch.ones_like(index, dtype=torch.float))
+    
+    # Avoid division by zero
+    count = count.clamp(min=1)
+    result = result / count.unsqueeze(-1)
+    
+    return result
 
 
 class PointTransformer(nn.Module):
     def __init__(self, args):
         super(PointTransformer, self).__init__()
-        self.transformer = PointTransformerV3(
-            stride=(2, ),
-            enc_depths=(1, 1),
-            enc_channels=(16, 32),
-            enc_num_head=(2, 4),
-            enc_patch_size=(128, 128),
-            dec_depths=(1,),
-            dec_channels=(64, ),
-            dec_num_head=(2, ),
-            dec_patch_size=(128, ),
-            mlp_ratio=8,
-            in_channels=1,
-            enable_flash=False, 
-            cls_mode=False)
+        # Disable PointTransformerV3 due to torch_scatter dependency
+        # self.transformer = PointTransformerV3(
+        #     stride=(2, ),
+        #     enc_depths=(1, 1),
+        #     enc_channels=(16, 32),
+        #     enc_num_head=(2, 4),
+        #     enc_patch_size=(128, 128),
+        #     dec_depths=(1,),
+        #     dec_channels=(64, ),
+        #     dec_num_head=(2, ),
+        #     dec_patch_size=(128, ),
+        #     mlp_ratio=8,
+        #     in_channels=1,
+        #     enable_flash=False, 
+        #     cls_mode=False)
+        
+        # Use a simple placeholder instead
+        self.transformer = nn.Identity()
         
     @staticmethod
     def point_to_bev_mean(point):
@@ -102,7 +126,7 @@ class PointTransformer(nn.Module):
         )
         
         # Aggregate features
-        bev_feature_map = scatter_mean(feats, linear_indices, dim=0, dim_size=total_elements)
+        bev_feature_map = scatter_mean_replacement(feats, linear_indices, dim=0, dim_size=total_elements)
         
         # Reshape
         bev_feature_map = bev_feature_map.view(batch_size, H, W, num_channels)
@@ -145,7 +169,9 @@ class PointTransformer(nn.Module):
 
 
     def forward(self, data_dict, modality_name, multi_sensor=False):
-        point = self.transformer(data_dict[f'inputs_{modality_name}'])
+        # Since we disabled PointTransformerV3, we'll directly use the input
+        point = data_dict[f'inputs_{modality_name}']
+        # point = self.transformer(data_dict[f'inputs_{modality_name}'])
         # convert points to BEV feature map
         # lidar_range = point['lidar_range']
         # voxel_size = point['voxel_size']

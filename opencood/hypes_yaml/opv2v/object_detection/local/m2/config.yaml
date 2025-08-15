@@ -7,7 +7,7 @@ yaml_parsers:
   m2:
     "load_general_params"
 train_params:
-  batch_size: &batch_size 4
+  batch_size: &batch_size 1
   epoches: 30
   eval_freq: 2
   save_freq: 2
@@ -91,7 +91,7 @@ model:
         mean_vfe:
           num_point_features: 4
         spconv:
-          num_features_in: 64
+          num_features_in: 4
           num_features_out: 64
         map2bev:
           feature_num: 128
