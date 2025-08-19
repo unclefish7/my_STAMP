@@ -1,4 +1,4 @@
-name: m1_CoBevT
+name: m1_CoBevT_both
 root_dir: "dataset/OPV2V/train"
 validate_dir: "dataset/OPV2V/validate"
 test_dir: "dataset/OPV2V/test"
@@ -8,7 +8,7 @@ yaml_parsers:
     "load_rgb_params"
 
 train_params:
-  batch_size: &batch_size 4
+  batch_size: &batch_size 1
   epoches: &epoches 30
   eval_freq: 2
   save_freq: 2
@@ -69,7 +69,7 @@ model:
   args:
     supervise_single: false
     m1:
-      target: &target static # dynamic, static, both
+      target: &target both # dynamic, static, both
       core_method: *core_method
       sensor_type: *sensor_type
       lidar_range: *cav_lidar
