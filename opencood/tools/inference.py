@@ -375,7 +375,7 @@ def main():
                 hypes['postprocess'] = hypes['heter']['modality_setting'][ego_modality]['postprocess'].copy()
             else:
                 # Create a minimal postprocess config for segmentation tasks
-                default_range = hypes.get('cav_lidar_range', [-51.2, -51.2, -3, 51.2, 51.2, 1])
+                default_range = hypes.get('cav_lidar_range', [-51.2, -51.2, -2, 51.2, 51.2, 2])
                 hypes['postprocess'] = {
                     'core_method': 'CameraBevPostprocessor',  # Default for segmentation
                     'gt_range': default_range,
@@ -388,7 +388,7 @@ def main():
                 }
         else:
             # Use cav_lidar_range as default for visualization
-            default_range = hypes.get('cav_lidar_range', [-51.2, -51.2, -3, 51.2, 51.2, 1])
+            default_range = hypes.get('cav_lidar_range', [-51.2, -51.2, -2, 51.2, 51.2, 2])
             hypes['postprocess'] = {
                 'core_method': 'CameraBevPostprocessor',
                 'gt_range': default_range
@@ -401,11 +401,11 @@ def main():
             # Get range from first modality
             first_modality = list(hypes['heter']['modality_setting'].keys())[0]
             if 'postprocess' in hypes['heter']['modality_setting'][first_modality]:
-                hypes['postprocess']['gt_range'] = hypes['heter']['modality_setting'][first_modality]['postprocess'].get('gt_range', [-51.2, -51.2, -3, 51.2, 51.2, 1])
+                hypes['postprocess']['gt_range'] = hypes['heter']['modality_setting'][first_modality]['postprocess'].get('gt_range', [-51.2, -51.2, -2, 51.2, 51.2, 2])
             else:
-                hypes['postprocess']['gt_range'] = [-51.2, -51.2, -3, 51.2, 51.2, 1]
+                hypes['postprocess']['gt_range'] = [-51.2, -51.2, -2, 51.2, 51.2, 2]
         else:
-            hypes['postprocess']['gt_range'] = [-51.2, -51.2, -3, 51.2, 51.2, 1]
+            hypes['postprocess']['gt_range'] = [-51.2, -51.2, -2, 51.2, 51.2, 2]
 
     print('Creating Model')
     model = train_utils.create_model(hypes)
