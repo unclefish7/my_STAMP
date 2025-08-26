@@ -327,6 +327,11 @@ class HomoCollab(nn.Module):
         heter_feature_2d_list = []
         for modality_name in agent_modality_list:
             feat_idx = counting_dict[modality_name]
+            # # Add boundary check to prevent index out of bounds
+            # if feat_idx >= modality_feature_dict[modality_name].shape[0]:
+            #     print(f"Warning: feat_idx {feat_idx} >= tensor size {modality_feature_dict[modality_name].shape[0]} for modality {modality_name}")
+            #     # Use the last available feature or repeat the last one
+            #     feat_idx = min(feat_idx, modality_feature_dict[modality_name].shape[0] - 1)
             heter_feature_2d_list.append(modality_feature_dict[modality_name][feat_idx])
             counting_dict[modality_name] += 1
             

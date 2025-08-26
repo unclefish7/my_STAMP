@@ -22,6 +22,8 @@ from opencood.tools import train_utils, inference_utils
 from opencood.data_utils.datasets import build_dataset
 from opencood.utils import eval_utils
 from opencood.utils.seg_iou import mean_IU
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score, confusion_matrix
+import matplotlib.pyplot as plt
 from opencood.visualization import vis_utils, my_vis, simple_vis
 from opencood.utils.common_utils import update_dict
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -79,6 +81,156 @@ def debug_tensor_info(tensor, name, detailed=True):
         
     except Exception as e:
         debug_print(f"Error analyzing tensor {name}: {e}", "ERROR")
+
+def calculate_segmentation_metrics(pred, gt, num_classes, class_names=None):
+    """
+    Calculate comprehensive segmentation metrics including IoU, Precision, Recall, F1, Accuracy
+    
+    Parameters
+    ----------
+    pred : numpy.ndarray
+        Predicted segmentation map [H, W]
+    gt : numpy.ndarray  
+        Ground truth segmentation map [H, W]
+    num_classes : int
+        Number of classes
+    class_names : list, optional
+        Names of classes for better reporting
+        
+    Returns
+    -------
+    dict
+        Dictionary containing all metrics
+    """
+    if class_names is None:
+        class_names = [f"Class_{i}" for i in range(num_classes)]
+    
+    # Flatten arrays for sklearn metrics
+    pred_flat = pred.flatten()
+    gt_flat = gt.flatten()
+    
+    # Overall pixel accuracy
+    overall_accuracy = accuracy_score(gt_flat, pred_flat)
+    
+    # Confusion matrix
+    conf_matrix = confusion_matrix(gt_flat, pred_flat, labels=range(num_classes))
+    
+    # Per-class metrics
+    precision, recall, f1, support = precision_recall_fscore_support(
+        gt_flat, pred_flat, labels=range(num_classes), zero_division=0
+    )
+    
+    # IoU calculation
+    iou_per_class = []
+    for i in range(num_classes):
+        intersection = np.sum((pred_flat == i) & (gt_flat == i))
+        union = np.sum((pred_flat == i) | (gt_flat == i))
+        if union == 0:
+            iou_per_class.append(0.0 if intersection == 0 else 1.0)
+        else:
+            iou_per_class.append(intersection / union)
+    
+    # Mean IoU
+    mean_iou = np.mean(iou_per_class)
+    
+    # Frequency weighted IoU
+    freq_weights = support / np.sum(support)
+    freq_weighted_iou = np.sum(freq_weights * iou_per_class)
+    
+    # Class accuracy (recall)
+    class_accuracy = recall
+    
+    # Mean class accuracy
+    mean_class_accuracy = np.mean(class_accuracy)
+    
+    return {
+        'overall_accuracy': overall_accuracy,
+        'mean_iou': mean_iou,
+        'freq_weighted_iou': freq_weighted_iou,
+        'mean_class_accuracy': mean_class_accuracy,
+        'per_class_metrics': {
+            class_names[i]: {
+                'iou': iou_per_class[i],
+                'precision': precision[i],
+                'recall': recall[i],
+                'f1': f1[i],
+                'support': support[i]
+            } for i in range(num_classes)
+        },
+        'confusion_matrix': conf_matrix
+    }
+
+def print_segmentation_metrics(metrics, title="Segmentation Metrics"):
+    """
+    Print segmentation metrics in a formatted way
+    """
+    print(f"\n{'='*60}")
+    print(f"📊 {title}")
+    print(f"{'='*60}")
+    
+    # Overall metrics
+    print(f"🎯 Overall Pixel Accuracy: {metrics['overall_accuracy']:.4f}")
+    print(f"🔥 Mean IoU: {metrics['mean_iou']:.4f}")
+    print(f"⚖️  Frequency Weighted IoU: {metrics['freq_weighted_iou']:.4f}")
+    print(f"📈 Mean Class Accuracy: {metrics['mean_class_accuracy']:.4f}")
+    
+    # Per-class metrics
+    print(f"\n{'='*40}")
+    print(f"📋 Per-Class Metrics:")
+    print(f"{'='*40}")
+    print(f"{'Class':<15} {'IoU':<8} {'Precision':<10} {'Recall':<8} {'F1':<8} {'Support':<8}")
+    print(f"{'-'*65}")
+    
+    for class_name, class_metrics in metrics['per_class_metrics'].items():
+        print(f"{class_name:<15} "
+              f"{class_metrics['iou']:<8.4f} "
+              f"{class_metrics['precision']:<10.4f} " 
+              f"{class_metrics['recall']:<8.4f} "
+              f"{class_metrics['f1']:<8.4f} "
+              f"{class_metrics['support']:<8}")
+    
+    print(f"{'='*60}\n")
+
+def create_segmentation_metrics_summary():
+    """
+    Create a summary of all available segmentation metrics
+    """
+    summary = """
+    🎯 ENHANCED SEGMENTATION EVALUATION METRICS
+    ==========================================
+    
+    📊 CLASSIC METRICS (similar to AP in detection):
+    ├─ IoU (Intersection over Union) - Per class and mean
+    ├─ Pixel Accuracy - Overall correctness
+    ├─ Mean Class Accuracy - Balanced accuracy across classes
+    └─ Frequency Weighted IoU - Weighted by class frequency
+    
+    🔍 DETAILED PER-CLASS METRICS:
+    ├─ Precision - True positives / (True positives + False positives)
+    ├─ Recall - True positives / (True positives + False negatives)  
+    ├─ F1-Score - Harmonic mean of precision and recall
+    └─ Support - Number of true instances per class
+    
+    🚗 VEHICLE DETECTION SPECIFIC:
+    ├─ Vehicle IoU - How well vehicles are segmented
+    ├─ Vehicle F1-Score - Balanced vehicle detection performance
+    ├─ Vehicle Precision - Accuracy of vehicle predictions
+    └─ Vehicle Recall - Completeness of vehicle detection
+    
+    📈 VISUALIZATION & ANALYSIS:
+    ├─ Confusion Matrix - Class-wise prediction analysis
+    ├─ Class Distribution - Pixel counts per class
+    ├─ Per-frame detailed metrics saved to JSON
+    └─ Comprehensive final results summary
+    
+    🔧 USAGE:
+    ├─ Add --detailed_seg_metrics for comprehensive metrics
+    ├─ Add --seg_debug for detailed debugging information
+    └─ Metrics saved to segmentation_results_[info].json
+    
+    ==========================================
+    """
+    return summary
 
 def eval_segmentation_result(opt, infer_result_single, i, work_dir):
     """
@@ -176,24 +328,88 @@ def eval_segmentation_result(opt, infer_result_single, i, work_dir):
         elif pred_vehicles > 0:
             debug_print(f"✅ Model predicted {pred_vehicles} vehicle pixels", "SUCCESS")
     
-    # === IoU CALCULATION ===
-    debug_print("Calculating IoU metrics...", "INFO")
+    # === IoU CALCULATION & COMPREHENSIVE METRICS ===
+    debug_print("Calculating comprehensive segmentation metrics...", "INFO")
+    
+    # Define class names for better reporting
+    static_class_names = ["Background", "Road", "Lane"]
+    dynamic_class_names = ["Background", "Vehicle"]
+    
+    # Calculate comprehensive metrics
+    static_metrics = None
+    dynamic_metrics = None
     
     try:
-        iou_dynamic = mean_IU(pred_dynamic, gt_dynamic)
-        debug_print(f"Dynamic IoU calculated: {np.mean(iou_dynamic):.4f}")
-        debug_tensor_info(iou_dynamic, "DYNAMIC_IoU", detailed=False)
+        # Static segmentation metrics
+        static_metrics = calculate_segmentation_metrics(
+            pred_static, gt_static, 
+            num_classes=3, 
+            class_names=static_class_names
+        )
+        debug_print(f"Static Mean IoU: {static_metrics['mean_iou']:.4f}", "SUCCESS")
+        if DEBUG_SEGMENTATION:
+            print_segmentation_metrics(static_metrics, "Static Segmentation Metrics")
+            
+        # Legacy IoU for compatibility
+        iou_static = mean_IU(pred_static, gt_static)
+        debug_tensor_info(iou_static, "STATIC_IoU", detailed=False)
+        
     except Exception as e:
-        debug_print(f"Error calculating dynamic IoU: {e}", "ERROR")
+        debug_print(f"Error calculating static metrics: {e}", "ERROR")
+        iou_static = None
+    
+    try:
+        # Dynamic segmentation metrics  
+        dynamic_metrics = calculate_segmentation_metrics(
+            pred_dynamic, gt_dynamic,
+            num_classes=2,
+            class_names=dynamic_class_names
+        )
+        debug_print(f"Dynamic Mean IoU: {dynamic_metrics['mean_iou']:.4f}", "SUCCESS")
+        if DEBUG_SEGMENTATION:
+            print_segmentation_metrics(dynamic_metrics, "Dynamic Segmentation Metrics")
+            
+        # Legacy IoU for compatibility
+        iou_dynamic = mean_IU(pred_dynamic, gt_dynamic)
+        debug_tensor_info(iou_dynamic, "DYNAMIC_IoU", detailed=False)
+        
+    except Exception as e:
+        debug_print(f"Error calculating dynamic metrics: {e}", "ERROR")
         iou_dynamic = None
     
-    try:
-        iou_static = mean_IU(pred_static, gt_static)
-        debug_print(f"Static IoU calculated: {np.mean(iou_static):.4f}")
-        debug_tensor_info(iou_static, "STATIC_IoU", detailed=False)
-    except Exception as e:
-        debug_print(f"Error calculating static IoU: {e}", "ERROR")
-        iou_static = None
+    # Print summary metrics
+    if static_metrics and dynamic_metrics:
+        print(f"\n🎯 SUMMARY METRICS - Frame {i}:")
+        print(f"   Static  - Mean IoU: {static_metrics['mean_iou']:.4f}, Pixel Acc: {static_metrics['overall_accuracy']:.4f}")
+        print(f"   Dynamic - Mean IoU: {dynamic_metrics['mean_iou']:.4f}, Pixel Acc: {dynamic_metrics['overall_accuracy']:.4f}")
+        
+        # Vehicle detection performance
+        if 'Vehicle' in static_metrics['per_class_metrics']:
+            vehicle_f1 = dynamic_metrics['per_class_metrics']['Vehicle']['f1']
+            vehicle_recall = dynamic_metrics['per_class_metrics']['Vehicle']['recall']
+            vehicle_precision = dynamic_metrics['per_class_metrics']['Vehicle']['precision']
+            print(f"   Vehicle Detection - F1: {vehicle_f1:.4f}, Recall: {vehicle_recall:.4f}, Precision: {vehicle_precision:.4f}")
+        print()
+        
+    # Save comprehensive metrics to file
+    if i % opt.save_vis_interval == 0 and (static_metrics or dynamic_metrics):
+        metrics_save_path = os.path.join(work_dir, 'detailed_metrics')
+        if not os.path.exists(metrics_save_path):
+            os.makedirs(metrics_save_path)
+            
+        metrics_file = os.path.join(metrics_save_path, f"metrics_frame_{i:05d}.json")
+        
+        combined_metrics = {
+            'frame_id': i,
+            'static_metrics': static_metrics,
+            'dynamic_metrics': dynamic_metrics
+        }
+        
+        import json
+        with open(metrics_file, 'w') as f:
+            json.dump(combined_metrics, f, indent=2, default=str)
+        
+        debug_print(f"Detailed metrics saved to {metrics_file}", "SUCCESS")
 
     # === VISUALIZATION ===
     if i % opt.save_vis_interval == 0:
@@ -234,7 +450,15 @@ def eval_segmentation_result(opt, infer_result_single, i, work_dir):
         debug_print(f"Visualizations saved to {vis_save_path_root}", "SUCCESS")
 
     debug_print(f"Segmentation evaluation completed for frame {i}", "SUCCESS")
-    return iou_static, iou_dynamic
+    
+    # Return both legacy IoU and comprehensive metrics
+    return_dict = {
+        'iou_static': iou_static,
+        'iou_dynamic': iou_dynamic, 
+        'static_metrics': static_metrics,
+        'dynamic_metrics': dynamic_metrics
+    }
+    return return_dict
 
 def test_parser():
     parser = argparse.ArgumentParser(description="synthetic data generation")
@@ -255,6 +479,10 @@ def test_parser():
     parser.add_argument('--note', default="", type=str, help="any other thing?")
     parser.add_argument('--all', action='store_true', help="evaluate all the agents instead of the first one.")
     parser.add_argument('--show_bev', action='store_true', help="Visualize the BEV feature")
+    parser.add_argument('--detailed_seg_metrics', action='store_true', 
+                        help="Calculate and display detailed segmentation metrics (IoU, Precision, Recall, F1)")
+    parser.add_argument('--seg_debug', action='store_true', 
+                        help="Enable debug mode for segmentation evaluation")
     opt = parser.parse_args()
     return opt
 
@@ -262,13 +490,22 @@ def test_parser():
 def main():
     opt = test_parser()
     
+    # Set debug mode based on command line argument
+    global DEBUG_SEGMENTATION
+    if opt.seg_debug:
+        DEBUG_SEGMENTATION = True
+    
     # Debug status notification
     if DEBUG_SEGMENTATION:
         print("\n" + "="*60)
         print("🔧 SEGMENTATION DEBUG MODE ENABLED 🔧")
         print("   Detailed debug information will be displayed")
-        print("   To disable: Set DEBUG_SEGMENTATION = False")
+        print("   To disable: remove --seg_debug flag")
         print("="*60 + "\n")
+    
+    # Show available metrics if detailed metrics are enabled
+    if opt.detailed_seg_metrics:
+        print(create_segmentation_metrics_summary())
 
     assert opt.fusion_method in ['late', 'early', 'intermediate', 'no', 'no_w_uncertainty', 'single'] 
 
@@ -510,22 +747,56 @@ def main():
                     # Segmentation task - run segmentation evaluation
                     debug_print(f"Detected segmentation task on modality {agent_modality_list[idx] if opt.all else 'default'}", "INFO")
                     
-                    iou_static, iou_dynamic = eval_segmentation_result(opt, infer_result_single, i, work_dir)
+                    eval_result = eval_segmentation_result(opt, infer_result_single, i, work_dir)
                     
-                    if iou_static is not None and iou_dynamic is not None:
+                    if eval_result and eval_result['iou_static'] is not None and eval_result['iou_dynamic'] is not None:
+                        # Extract legacy IoU values for compatibility
+                        iou_static = eval_result['iou_static']
+                        iou_dynamic = eval_result['iou_dynamic']
+                        static_metrics = eval_result['static_metrics']
+                        dynamic_metrics = eval_result['dynamic_metrics']
+                        
                         if opt.all:
                             seg_result_stat[agent_modality_list[idx]]['static_iou'].append(iou_static)
                             seg_result_stat[agent_modality_list[idx]]['dynamic_iou'].append(iou_dynamic)
+                            # Store comprehensive metrics too
+                            if 'static_metrics' not in seg_result_stat[agent_modality_list[idx]]:
+                                seg_result_stat[agent_modality_list[idx]]['static_metrics'] = []
+                                seg_result_stat[agent_modality_list[idx]]['dynamic_metrics'] = []
+                            seg_result_stat[agent_modality_list[idx]]['static_metrics'].append(static_metrics)
+                            seg_result_stat[agent_modality_list[idx]]['dynamic_metrics'].append(dynamic_metrics)
                         else:
                             seg_result_stat['static_iou'].append(iou_static)
                             seg_result_stat['dynamic_iou'].append(iou_dynamic)
+                            # Store comprehensive metrics too
+                            if 'static_metrics' not in seg_result_stat:
+                                seg_result_stat['static_metrics'] = []
+                                seg_result_stat['dynamic_metrics'] = []
+                            seg_result_stat['static_metrics'].append(static_metrics)
+                            seg_result_stat['dynamic_metrics'].append(dynamic_metrics)
                         
+                        # Legacy display for compatibility
                         static_mean = np.mean(iou_static)
                         dynamic_mean = np.mean(iou_dynamic)
-                        debug_print(f"Frame {i} Results - Static IoU: {static_mean:.4f}, Dynamic IoU: {dynamic_mean:.4f}", "SUCCESS")
-                        print(f"Frame {i}: Static IoU: {static_mean:.4f}, Dynamic IoU: {dynamic_mean:.4f}")
+                        
+                        # Enhanced display with comprehensive metrics
+                        if static_metrics and dynamic_metrics:
+                            static_overall_acc = static_metrics['overall_accuracy']
+                            dynamic_overall_acc = dynamic_metrics['overall_accuracy']
+                            static_mean_iou = static_metrics['mean_iou']
+                            dynamic_mean_iou = dynamic_metrics['mean_iou']
+                            
+                            print(f"Frame {i}: Static IoU: {static_mean_iou:.4f} (Acc: {static_overall_acc:.4f}), "
+                                  f"Dynamic IoU: {dynamic_mean_iou:.4f} (Acc: {dynamic_overall_acc:.4f})")
+                            
+                            debug_print(f"Frame {i} Comprehensive Results - "
+                                      f"Static [IoU: {static_mean_iou:.4f}, Acc: {static_overall_acc:.4f}], "
+                                      f"Dynamic [IoU: {dynamic_mean_iou:.4f}, Acc: {dynamic_overall_acc:.4f}]", "SUCCESS")
+                        else:
+                            print(f"Frame {i}: Static IoU: {static_mean:.4f}, Dynamic IoU: {dynamic_mean:.4f}")
+                            debug_print(f"Frame {i} Results - Static IoU: {static_mean:.4f}, Dynamic IoU: {dynamic_mean:.4f}", "SUCCESS")
                     else:
-                        debug_print(f"Frame {i}: Failed to calculate IoU", "ERROR")
+                        debug_print(f"Frame {i}: Failed to calculate segmentation metrics", "ERROR")
                     
                     continue
                 
@@ -637,7 +908,7 @@ def main():
                                             work_dir, infer_info)
     else:
         # Check if we have detection or segmentation results  
-        if seg_result_stat['static_iou']:
+        if seg_result_stat.get('static_iou'):
             # Segmentation evaluation
             static_ious = seg_result_stat['static_iou']
             dynamic_ious = seg_result_stat['dynamic_iou']
@@ -645,21 +916,116 @@ def main():
             avg_static_iou = np.mean([np.mean(iou) for iou in static_ious])
             avg_dynamic_iou = np.mean([np.mean(iou) for iou in dynamic_ious])
             
-            print(f"Final Segmentation Results:")
+            print(f"\n{'='*80}")
+            print(f"🎯 FINAL SEGMENTATION RESULTS")
+            print(f"{'='*80}")
+            print(f"📊 Legacy IoU Metrics:")
             print(f"  Average Static IoU: {avg_static_iou:.4f}")
             print(f"  Average Dynamic IoU: {avg_dynamic_iou:.4f}")
             
-            # Save segmentation results
+            # Calculate comprehensive metrics if available
+            if seg_result_stat.get('static_metrics') and seg_result_stat.get('dynamic_metrics'):
+                static_metrics_list = seg_result_stat['static_metrics']
+                dynamic_metrics_list = seg_result_stat['dynamic_metrics']
+                
+                # Average comprehensive metrics across all frames
+                avg_static_metrics = {}
+                avg_dynamic_metrics = {}
+                
+                if static_metrics_list:
+                    # Calculate averages for static metrics
+                    avg_static_metrics = {
+                        'mean_iou': np.mean([m['mean_iou'] for m in static_metrics_list if m]),
+                        'overall_accuracy': np.mean([m['overall_accuracy'] for m in static_metrics_list if m]),
+                        'freq_weighted_iou': np.mean([m['freq_weighted_iou'] for m in static_metrics_list if m]),
+                        'mean_class_accuracy': np.mean([m['mean_class_accuracy'] for m in static_metrics_list if m])
+                    }
+                    
+                    # Per-class averages for static
+                    class_metrics_avg = {}
+                    for class_name in ["Background", "Road", "Lane"]:
+                        class_metrics_avg[class_name] = {
+                            'iou': np.mean([m['per_class_metrics'][class_name]['iou'] for m in static_metrics_list if m and class_name in m['per_class_metrics']]),
+                            'precision': np.mean([m['per_class_metrics'][class_name]['precision'] for m in static_metrics_list if m and class_name in m['per_class_metrics']]),
+                            'recall': np.mean([m['per_class_metrics'][class_name]['recall'] for m in static_metrics_list if m and class_name in m['per_class_metrics']]),
+                            'f1': np.mean([m['per_class_metrics'][class_name]['f1'] for m in static_metrics_list if m and class_name in m['per_class_metrics']])
+                        }
+                    avg_static_metrics['per_class_metrics'] = class_metrics_avg
+                
+                if dynamic_metrics_list:
+                    # Calculate averages for dynamic metrics
+                    avg_dynamic_metrics = {
+                        'mean_iou': np.mean([m['mean_iou'] for m in dynamic_metrics_list if m]),
+                        'overall_accuracy': np.mean([m['overall_accuracy'] for m in dynamic_metrics_list if m]),
+                        'freq_weighted_iou': np.mean([m['freq_weighted_iou'] for m in dynamic_metrics_list if m]),
+                        'mean_class_accuracy': np.mean([m['mean_class_accuracy'] for m in dynamic_metrics_list if m])
+                    }
+                    
+                    # Per-class averages for dynamic
+                    class_metrics_avg = {}
+                    for class_name in ["Background", "Vehicle"]:
+                        class_metrics_avg[class_name] = {
+                            'iou': np.mean([m['per_class_metrics'][class_name]['iou'] for m in dynamic_metrics_list if m and class_name in m['per_class_metrics']]),
+                            'precision': np.mean([m['per_class_metrics'][class_name]['precision'] for m in dynamic_metrics_list if m and class_name in m['per_class_metrics']]),
+                            'recall': np.mean([m['per_class_metrics'][class_name]['recall'] for m in dynamic_metrics_list if m and class_name in m['per_class_metrics']]),
+                            'f1': np.mean([m['per_class_metrics'][class_name]['f1'] for m in dynamic_metrics_list if m and class_name in m['per_class_metrics']])
+                        }
+                    avg_dynamic_metrics['per_class_metrics'] = class_metrics_avg
+                
+                # Display comprehensive metrics
+                print(f"\n🔥 COMPREHENSIVE METRICS:")
+                print(f"📈 Static Segmentation:")
+                if avg_static_metrics:
+                    print(f"   Mean IoU: {avg_static_metrics['mean_iou']:.4f}")
+                    print(f"   Overall Accuracy: {avg_static_metrics['overall_accuracy']:.4f}")
+                    print(f"   Freq. Weighted IoU: {avg_static_metrics['freq_weighted_iou']:.4f}")
+                    print(f"   Mean Class Accuracy: {avg_static_metrics['mean_class_accuracy']:.4f}")
+                    print(f"   Per-Class Performance:")
+                    for class_name, metrics in avg_static_metrics['per_class_metrics'].items():
+                        print(f"     {class_name}: IoU={metrics['iou']:.4f}, F1={metrics['f1']:.4f}, Prec={metrics['precision']:.4f}, Rec={metrics['recall']:.4f}")
+                
+                print(f"\n🚗 Dynamic Segmentation:")
+                if avg_dynamic_metrics:
+                    print(f"   Mean IoU: {avg_dynamic_metrics['mean_iou']:.4f}")
+                    print(f"   Overall Accuracy: {avg_dynamic_metrics['overall_accuracy']:.4f}")
+                    print(f"   Freq. Weighted IoU: {avg_dynamic_metrics['freq_weighted_iou']:.4f}")
+                    print(f"   Mean Class Accuracy: {avg_dynamic_metrics['mean_class_accuracy']:.4f}")
+                    print(f"   Per-Class Performance:")
+                    for class_name, metrics in avg_dynamic_metrics['per_class_metrics'].items():
+                        print(f"     {class_name}: IoU={metrics['iou']:.4f}, F1={metrics['f1']:.4f}, Prec={metrics['precision']:.4f}, Rec={metrics['recall']:.4f}")
+                
+                # Vehicle detection summary
+                if avg_dynamic_metrics and 'Vehicle' in avg_dynamic_metrics['per_class_metrics']:
+                    vehicle_metrics = avg_dynamic_metrics['per_class_metrics']['Vehicle']
+                    print(f"\n🎯 VEHICLE DETECTION SUMMARY:")
+                    print(f"   Vehicle IoU: {vehicle_metrics['iou']:.4f}")
+                    print(f"   Vehicle F1-Score: {vehicle_metrics['f1']:.4f}")
+                    print(f"   Vehicle Precision: {vehicle_metrics['precision']:.4f}")
+                    print(f"   Vehicle Recall: {vehicle_metrics['recall']:.4f}")
+            
+            print(f"{'='*80}")
+            
+            # Save comprehensive segmentation results
             seg_results = {
-                'static_iou': avg_static_iou,
-                'dynamic_iou': avg_dynamic_iou,
-                'static_ious_per_frame': static_ious,
-                'dynamic_ious_per_frame': dynamic_ious
+                'legacy_metrics': {
+                    'static_iou': avg_static_iou,
+                    'dynamic_iou': avg_dynamic_iou,
+                    'static_ious_per_frame': static_ious,
+                    'dynamic_ious_per_frame': dynamic_ious
+                },
+                'comprehensive_metrics': {
+                    'static_metrics': avg_static_metrics,
+                    'dynamic_metrics': avg_dynamic_metrics,
+                    'static_metrics_per_frame': static_metrics_list,
+                    'dynamic_metrics_per_frame': dynamic_metrics_list
+                }
             }
             
             import json
             with open(os.path.join(opt.model_dir, f'segmentation_results_{infer_info}.json'), 'w') as f:
                 json.dump(seg_results, f, indent=4, default=str)
+                
+            print(f"📁 Detailed results saved to: {opt.model_dir}/segmentation_results_{infer_info}.json")
         else:
             # Detection evaluation
             _, ap50, ap70 = eval_utils.eval_final_results(result_stat, opt.model_dir, infer_info)
